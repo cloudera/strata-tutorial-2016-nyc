@@ -1,0 +1,87 @@
+
+Strata 2016 NYC - Hadoop in the Cloud Tutorial
+==============================================
+
+Introduction
+------------
+
+This repository contains everything needed to run through a two step pipeline
+that will ingest data via Spark and make it available for interactive queries
+via Impala.
+
+The Spark step is expected to be a transient cluster running only for a couple
+of hours each day (potentially triggered via cron).
+
+The Impala one is expected to be long running and elastic and have multiple
+users that use Hue or the JDBC interface.
+
+Common Settings
+---------------
+
+Start by going through the AWS Quickstart flow:
+
+https://aws.amazon.com/quickstart/
+http://docs.aws.amazon.com/quickstart/latest/cloudera/welcome.html
+
+Relevant identifiers will be available as CloudFormation outputs.
+
+Run validation for both configuration files to ensure everything is 
+configured properly:
+
+$ cloudera-director validate spark.conf
+$ cloudera-director validate impala.conf
+
+Create a tunnel to Director from your local machine:
+
+$ ssh -C -L 7189:localhost:7189 ec2-user@<Cluster Launcher IP>
+# Use your browser to go to http://localhost:7189/
+
+Data ingest via Spark
+---------------------
+
+Ask Director to setup the Spark cluster for ETL:
+
+$ cloudera-director bootstrap-remote spark.conf --lp.remote.username=admin
+# Director will ask for the admin password
+
+Progress information is also available in the Director UI.
+
+Establish a tunnel to Cloudera Manager:
+
+$ ssh -i cloudera.pem -CN -L 7180:<CM Private IP>:7180 ec2-user@<Cluster Launcher IP>
+
+SSH into the master node and open the Spark shell:
+
+$ sudo -u hdfs -i bash
+
+$ curl -o ingest.scala https://raw.githubusercontent.com/cloudera/strata-tutorial-2016-nyc/master/ingest.scala
+$ spark-shell -i ingest.scala
+
+$ curl -o schema.hql https://raw.githubusercontent.com/cloudera/strata-tutorial-2016-nyc/master/schema.hql
+$ curl -o copy_to_s3.hql https://raw.githubusercontent.com/cloudera/strata-tutorial-2016-nyc/master/copy_to_s3.hql
+
+$ hive -f schema.hql
+$ hive -f copy_to_s3.hql
+
+SQL via Impala on integested data
+---------------------------------
+
+Ask Director to setup the Impala cluster for interactive queries:
+
+$ cloudera-director bootstrap-remote impala.conf --lp.remote.username=admin
+# Director will ask for the admin password
+
+Establish a tunnel to Cloudera Manager:
+
+$ ssh -i cloudera.pem -CN -L 7180:<CM Private IP>:7180 ec2-user@<Cluster Launcher IP>
+
+SSH into the master node and open the Impala shell:
+
+$ sudo -u hdfs -i bash
+
+$ curl -o schema.hql https://raw.githubusercontent.com/cloudera/strata-tutorial-2016-nyc/master/schema.hql
+$ hive -f schema.hql
+
+$ impala-shell
+# Run some interesting queries reading from S3
+
