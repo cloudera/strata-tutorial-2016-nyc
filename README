@@ -70,6 +70,8 @@ $ spark-shell -i ingest.scala
 $ curl -o schema.hql https://raw.githubusercontent.com/cloudera/strata-tutorial-2016-nyc/master/schema.hql
 $ curl -o copy_to_s3.hql https://raw.githubusercontent.com/cloudera/strata-tutorial-2016-nyc/master/copy_to_s3.hql
 
+Modify the schema.hql file to point to a new S3 bucket created via the AWS console.
+
 $ hive -f schema.hql
 $ hive -f copy_to_s3.hql
 
