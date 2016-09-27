@@ -1,0 +1,130 @@
+Programmatic Data Analysis with Impala
+======================================
+
+Now that we have all the data, it’s time to start analyzing it with Impala.
+
+Our table has a lot of information in it—raw stats, z-scores, normalized
+z-scores—so we can immediately start asking and answering some good questions.
+
+Let’s check in on the MVP race for this year.
+
+> select name, zTot from Players where year=2016 order by zTot desc limit 10;
+
+[Stephen Curry,19.766248304312754]
+[Kevin Durant,15.323017389251323]
+[Anthony Davis,13.186429940875069]
+[Kawhi Leonard,13.18181904233336]
+[James Harden,12.622408009920706]
+[Russell Westbrook,12.26014043592826]
+[Kyle Lowry,11.634357073733122]
+[Paul Millsap,11.28903998833887]
+[Chris Paul,10.843486407063033]
+[Jimmy Butler,10.475908301410975]
+
+
+Basketball fans should not be surprised to see Stephen Curry topping the list,
+as he’s having a historic year to date. The rest of the list contains players
+who are also having great years, so this is a good sanity check that ours
+z-score is a good statistic. Let’s check out the normalized scores as well to
+see if they tell a different story:
+
+
+> select name, nTot from Players where year=2016 order by nTot desc limit 10;
+ 
+[Stephen Curry,3.911865399387443]
+[Kevin Durant,2.8729484855957916]
+[Kawhi Leonard,2.7288580160780636]
+[Anthony Davis,2.599364621997217]
+[Russell Westbrook,2.4555072670169955]
+[Paul Millsap,2.3037685595490816]
+[LeBron James,2.1939606667616527]
+[Kyle Lowry,2.151090172022115]
+[Chris Paul,2.1331243771597586]
+[James Harden,2.0788749389912686]
+
+
+We see similar players in both lists, but the ordering is slightly different.
+Anthony Davis and Kawhi Leonard are neck and neck in z-score, but Leonard has a
+slight edge in normalized z-score, which suggests that he contributes more
+significantly across a wider spectrum of stats than does Davis, or that Davis
+may be overkill in the stats that he is good in. Curry has a commanding lead in
+both zTot and nTot—29% on the second place player in z-score and 39% in
+normalized z-score. Let’s have a look at Curry’s full numbers from this year.
+
+
+> select * from Players where year=2016 and name='Stephen Curry'
+
+[6,Stephen Curry,2016,27,PG,GSW,42,42,33.9,10.0,19.5,0.51,4.9,10.8,0.451,5.1,8.7,0.583,0.635,5.3,5.9,0.911,0.8,4.6,5.4,6.6,2.1,0.1,3.4,2.0,30.1,3.2822803060371077,3.4693236141930193,6.056007802613955,0.7550168635135219,2.695650422425284,3.076598009775487,-0.6534242946356899,-2.7596520748161213,3.8444476552061824,19.766248304312747,0.8113439563367003,0.42770109585695865,1.0,0.15840862722238425,0.4898747874478281,0.7843137254901962,-0.08887924083607253,-0.6708975521305531,1.0,3.911865399387443]
+
+We see his largest contributor to zTot is z3P at 6.05, meaning his three point
+game is contributing a lot to his value. Indeed, he’s actually top in this
+regard.
+
+
+> select name, 3p, z3p from Players  where year=2016 order by z3p desc limit 10;
+
+[Stephen Curry,4.9,6.056007802613957]
+[Klay Thompson,3.2,3.6363158210435227]
+[Damian Lillard,3.1,3.493980998598203]
+[Paul George,2.9,3.2093113537075637]
+[Kyle Lowry,2.7,2.9246417088169245]
+[J.J. Redick,2.7,2.9246417088169245]
+[James Harden,2.7,2.9246417088169245]
+[Eric Gordon,2.5,2.6399720639262854]
+[Wesley Matthews,2.5,2.6399720639262854]
+[C.J. McCollum,2.5,2.6399720639262854]
+
+Curry has almost doubled the value of the second place player, teammate Klay
+Thompson. At just shy of five three-pointers made a game, Curry is arguably
+having one of the best shooting seasons of all time. Or is he? z-scores can
+help us here, by telling us how much better a player is relative to the state
+of the league. We’ll run two queries to demonstrate:
+
+
+> select name, 3p, z3p from Players order by 3p desc limit 10;
+
+[Stephen Curry,4.9,6.056007802613957]
+[Stephen Curry,3.6,4.395853442084636]
+[Stephen Curry,3.5,4.372814802572277]
+[Ray Allen,3.4,4.735522316886375]
+[Ray Allen,3.3,4.863432467545102]
+[Dennis Scott,3.3,4.229610850304963]
+[George McCloud,3.3,4.229610850304963]
+[Stephen Curry,3.3,3.8893664999911772]
+[Klay Thompson,3.2,3.6363158210435227]
+[Klay Thompson,3.1,3.651613974257506]
+
+
+> select name, 3p, z3p from Players order by z3p desc limit 10;
+
+[Joe Hassett,1.3,10.220836345844305]
+[Mike Dunleavy,1.1,8.683932683360899]
+[Darrell Griffith,1.1,8.683932683360899]
+[Mike Dunleavy,0.8,7.496775843134757]
+[Joe Hassett,1.0,7.456044031025608]
+[Brian Taylor,1.2,6.94629576951599]
+[Darrell Griffith,1.2,6.9433935103235775]
+[Michael Adams,2.5,6.679409664703833]
+[Don Buse,0.9,6.671197290917649]
+[Danny Ainge,1.8,6.282718341161911]
+
+The first query shows that Curry makes, on average, more three-pointers than
+anyone in the history of the NBA. The second query shows that Joe Hassett had
+the best three-point shooting season in 1981, as compared to the rest of the
+league, in the history of the NBA. Curry doesn’t even rank in the top 10. (He
+barely misses it, coming in at 12th.) Although Hassett only made 1.3 three
+pointers a game in 1981, the three-point shot was new and few people were
+taking it. Three-pointers are common in today’s game to the point where there
+is talk about moving the line back. The proof is always in the numbers (which
+you should be able to compute yourself now):
+
+In 1981, Hassett’s 1.3 three-pointers a game was such a commanding difference
+over the league average of .04, that it produces a higher z-score than Curry’s
+4.9 in 2016. This example illustrates why it’s important to keep in mind that
+z-scores are measuring relative values in year: we’re not claiming that Hassett
+is a better three-point shooter than Stephen Curry, just that his performance
+in 1981 was a larger outlier that year than Curry’s in 2016.
+
+
+This is based on Jordan Volz' excellent Basketball Stats tutorial for Spark:
+http://blog.cloudera.com/blog/2016/06/how-to-analyze-fantasy-sports-using-apache-spark-and-sql/
