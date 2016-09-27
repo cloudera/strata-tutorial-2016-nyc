@@ -94,7 +94,7 @@ $ sudo -u hdfs -i bash
 $ curl -o schema.hql https://raw.githubusercontent.com/cloudera/strata-tutorial-2016-nyc/master/schema.hql
 $ hive -f schema.hql
 
-SSH into an Impala worker node and open the Impala shell:
-$ impala-shell
+Start the impala-shell from a worker node. Identify the Impala worker node from Cloudera Director UI.
+$ impala-shell -i <IP address of Impala worker node>
 # Run some interesting queries reading from S3
 
