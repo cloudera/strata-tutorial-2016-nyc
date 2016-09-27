@@ -25,6 +25,16 @@ http://docs.aws.amazon.com/quickstart/latest/cloudera/welcome.html
 
 Relevant identifiers will be available as CloudFormation outputs.
 
+Go to the AWS console and make note of the EC2 instance called ClusterLauncher. This is your Director server instance.
+
+SSH to the created Director server instance.
+$ ssh ec2-user@<Director server IP> -i <PEM file whose keyname was provided to AWS Quickstart>
+
+Download the conf files from this github repo to your Director server instance.
+Modify common.conf.sample by providing details specific to your AWS account.
+Use the information from the CloudFormation output. Use the ClusterLauncher security-group, and not the NAT security-group.
+Save this file as common.conf.
+
 Run validation for both configuration files to ensure everything is 
 configured properly:
 
@@ -82,6 +92,7 @@ $ sudo -u hdfs -i bash
 $ curl -o schema.hql https://raw.githubusercontent.com/cloudera/strata-tutorial-2016-nyc/master/schema.hql
 $ hive -f schema.hql
 
+SSH into an Impala worker node and open the Impala shell:
 $ impala-shell
 # Run some interesting queries reading from S3
 
